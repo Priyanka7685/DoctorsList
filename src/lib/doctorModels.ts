@@ -1,38 +1,6 @@
-import { time } from "console";
 import mongoose from "mongoose";
 
 const doctorSchema = new mongoose.Schema ({
-    // name: {
-    //     type: String,
-    //     required: true
-    // }, 
-    // specialty: {
-    //     type: String,
-    //     required: true
-    // },
-    //   address: {
-    //     type: String,
-    //     required: true,
-    //   },
-    //   experience: {
-    //     type: Number,
-    //     required: true,
-    //   },
-    //   createdAt: {
-    //     type: Date,
-    //     default: Date.now,
-    //   },
-    //   fees: {
-    //     type: Number,
-    //     required: true
-    //   },
-    // //   : online,offline , qualification, languages, availabilty, availabilty location, availabilty time, cashback 
-    // consultation: {
-    //     type: 
-    // }
-    //   imageUrl: {
-    //   }
-
     name: {
         type: String,
         required: true
@@ -57,13 +25,19 @@ const doctorSchema = new mongoose.Schema ({
         type: [String]
     },
     consultationFees: {
-        type: Number,
-        required: true
+        type: new mongoose.Schema(
+            {
+              online: { type: Number},
+              offline: { type: Number},
+            },
+            { _id: false }
+          ),
+          required: false,
     },
     hospital: { //facility
         type: String
     },
-    availabilty: {
+    availability: {
         online: {
             type: Boolean,
             required: false
@@ -75,7 +49,10 @@ const doctorSchema = new mongoose.Schema ({
         timings: {
             type: [String]
         }
-    }
+    },
+    address: {
+        type: String
+    },
 })
 
 const Doctors = mongoose.models.Doctor || mongoose.model("Doctor", doctorSchema)

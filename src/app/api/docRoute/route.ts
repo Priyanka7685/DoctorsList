@@ -1,75 +1,148 @@
-// import { NextResponse, NextRequest } from "next/server";
-// import Doctors from "@/lib/doctorModels";
-// import { connect } from "@/lib/dbConfig";
-// import {v2 as cloudinary} from 'cloudinary'
+import { NextResponse, NextRequest } from "next/server";
+import Doctors from "@/lib/doctorModels";
+import { connect } from "@/lib/dbConfig";
+import {v2 as cloudinary} from 'cloudinary';
+import multer from 'multer';
+import { Readable } from "stream";
+import path from "path";
+import { ByteLengthQueuingStrategy } from "stream/web";
 
-// cloudinary.config({
-//     cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-//     api_key: process.env.CLOUDINARY_API_KEY,
-//     api_secret: process.env.CLOUDINARY_API_SECRET,
-//   });
+cloudinary.config({
+    cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
 
+  const storage = multer.memoryStorage();
 
-// // post doctor
-// export async function POST(req: NextRequest) {
-
-//         try {
-//             await connect();
-//             const {name, specialty, email, address, experience} = req.body;
-
-
-//             const result = await cloudinary.uploader.upload(imageUrl)
-            
-
-//             const doctor = new Doctors({
-//                 name, 
-//                 specialty,
-//                 email,
-//                 address,
-//                 experience,
-//                 imageUrl: result.url,
-//             })
-//             const savedDoctor = await doctor.save();
-//             console.log(savedDoctor)
-//             return NextResponse.json({
-//                 message: 'Doctor added successfully',
-//                 doctor
-//             });
-//         } catch (error) {
-//             return NextResponse.json({
-//                 message: 'Error creating doctor',
-//                 error: error,
-//             });
-//         }
-//     } 
+  const fileFilter = (_req: any, file: any, cb: any) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext === '.jpg' || ext === '.jpeg' || ext === '.png') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only images are allowed'), false);
+    }
+  };
 
 
-//     // get doctor
-// export async function GET(req: NextRequest, res: NextResponse) {
-//     try {
-//         await connect()
-//         // pagination 
-//         const url = new URL(req.url); 
-//         const page = parseInt(url.searchParams.get('page') || '1', 10)
-//         const limit = parseInt(url.searchParams.get('limit') || '10', 10)
-//         const skip = (page - 1) * limit;
+// add doctors
+export async function POST(req: NextRequest) {
+    await connect();
 
-//         const doctors = await Doctors.find().skip(skip).limit(limit)
+    const formData = await req.formData();
+  const file = formData.get('image') as File;
 
-//         return NextResponse.json({
-//             message: "Doctors fetched successfully",
-//             doctors,
-//             page,
-//             limit,
-//         })
+  const buffer = Buffer.from(await file.arrayBuffer());
 
-//     } catch (error) {
-//         console.error(error);
-//         return NextResponse.json({
-//             message: "Error fetching doctors",
-//             error,
-//         })
-        
-//     }
-// }
+  const uploadResult = await new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'doctors',
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+    const readable = new Readable();
+    readable._read = () => {};
+    readable.push(buffer);
+    readable.push(null);
+    readable.pipe(uploadStream);
+  });
+
+  const doctor = await Doctors.create({
+    name: formData.get('name'),
+    imageUrl: (uploadResult as any).secure_url,
+    qualifications: formData.getAll('qualifications'),
+    specialization: formData.get('specialization'),
+    experience: formData.get('experience'),
+    languagesSpoken: formData.getAll('languagesSpoken'),
+    consultationFees: {
+        online: Number(formData.get('consultationFeeOnline') || 0),
+        offline: Number(formData.get('consultationFeeOffline') || 0),
+    },
+    hospital: formData.get('hospital'),
+    address: formData.get('address'),
+    availability: {
+      online: formData.get('online') === 'true',
+      offline: formData.get('offline') === 'true',
+      timings: formData.getAll('timings'),
+    },
+   
+  });
+
+  return NextResponse.json(doctor, {status: 201});
+    } 
+
+
+    // listing doctors with filter
+export async function GET(req: NextRequest) {
+    await connect();
+    const { searchParams } = new URL(req.url);
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "50");
+  const skip = (page - 1) * limit;
+  const filters = searchParams.get("filters");
+
+
+  const filterObject = filters ? JSON.parse(filters) : [];
+  let query: any = {};
+
+  filterObject.forEach((filter: string) => {
+
+    if (filterObject.includes("Hospital Visit") && !filterObject.includes("Online Consult")) {
+      query['availability.online'] = false; // Exclude doctors who are also online
+    }
+
+    if (filterObject.includes("Online Consult") && !filterObject.includes("Hospital Visit")) {
+      query['availability.offline'] = false; // Exclude doctors who are also online
+    }
+    
+
+    // Experience Filters
+    if (filter === '0-5') {
+      query['experience'] = { $lte: 5 };
+    } else if (filter === '6-10') {
+      query['experience'] = { $gte: 6, $lte: 10 };
+    } else if (filter === '11-16') {
+      query['experience'] = { $gte: 11, $lte: 16 };
+    } else if (filter === '16+') {
+      query['experience'] = { $gte: 17 };
+    } 
+
+    // Fees Filters
+    if (filter === '100-500') {
+      query['consultationFees.offline'] = { $lte: 500 };
+    } else if (filter === '500-1000') {
+      query['consultationFees.offline'] = { $gte: 501, $lte: 1000 };
+    } else if (filter === '1000+') {
+      query['consultationFees.offline'] = { $gte: 1001 };
+    }
+
+    // Hospital Filters
+    if (filter === 'Apollo Hospital') {
+      query['hospital'] = { $regex: '\\bApollo\\b', $options: 'i' };
+    } else if (filter === 'Other Clinics') {
+      query['hospital'] = { $ne: 'Apollo Hospital' }; // Exclude Apollo Hospital
+    }
+
+    // Language Filters
+    const languageList = [
+      'English', 'Hindi', 'Telugu', 'Punjabi', 'Bengali',
+      'Marathi', 'Urdu', 'Gujarati', 'Tamil', 'Kannada',
+      'Oriya', 'Persian', 'Assamese'
+    ];
+    if (languageList.includes(filter)) {
+      query['languagesSpoken'] = { $in: [filter] };
+    }
+  });
+
+  const totalDoctors = await Doctors.countDocuments(query);
+  const doctors = await Doctors.find(query).skip(skip).limit(limit);
+
+  const totalPages = Math.ceil(totalDoctors / limit);
+
+  return NextResponse.json({ doctors, totalPages }, { status: 200 });
+}
   

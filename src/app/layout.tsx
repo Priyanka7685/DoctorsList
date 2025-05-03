@@ -5,6 +5,7 @@ import Header from "./components/Header";
 import DoctorCard from "./components/DoctorCard";
 import DoctorFilters from "./components/DoctorFilters";
 import FilterGroup from "./components/FilterGroup";
+import Footer from "./components/Footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,12 +32,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased ` }
       >
-
           <Header/>
-        {/* <DoctorFilters/> */}
-        {/* <DoctorCard/> */}
         {children}
-        
+        <Footer/>
       </body>
     </html>
   );
