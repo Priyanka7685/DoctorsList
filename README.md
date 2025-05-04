@@ -10,6 +10,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 
 <!-- steps to start project -->
+## steps
 1. Clone rep
 2. Install dependencied -- npm install
 3. create env.local with your credentials
