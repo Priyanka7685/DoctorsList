@@ -5,7 +5,6 @@ import {v2 as cloudinary} from 'cloudinary';
 import multer from 'multer';
 import { Readable } from "stream";
 import path from "path";
-import { ByteLengthQueuingStrategy } from "stream/web";
 
 cloudinary.config({
     cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -13,16 +12,16 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
   });
 
-  const storage = multer.memoryStorage();
+  // const storage = multer.memoryStorage();
 
-  const fileFilter = (_req: any, file: any, cb: any) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (ext === '.jpg' || ext === '.jpeg' || ext === '.png') {
-      cb(null, true);
-    } else {
-      cb(new Error('Only images are allowed'), false);
-    }
-  };
+  // const fileFilter = (_req: any, file: any, cb: any) => {
+  //   const ext = path.extname(file.originalname).toLowerCase();
+  //   if (ext === '.jpg' || ext === '.jpeg' || ext === '.png') {
+  //     cb(null, true);
+  //   } else {
+  //     cb(new Error('Only images are allowed'), false);
+  //   }
+  // };
 
 
 // add doctors
@@ -87,7 +86,7 @@ export async function GET(req: NextRequest) {
 
 
   const filterObject = filters ? JSON.parse(filters) : [];
-  let query: any = {};
+  const query: any = {};
 
   filterObject.forEach((filter: string) => {
 

@@ -20,6 +20,7 @@ export async function connect() {
 
         connection.on('error', (err) => {
             console.log('MongoDB not connected successfully');
+            console.error(err)
             
         })
         

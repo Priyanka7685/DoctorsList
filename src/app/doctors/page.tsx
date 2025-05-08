@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import DoctorFilters from "../components/DoctorFilters";
-import DoctorCard from "../components/DoctorCard";
 import { ChevronRight } from "lucide-react";
 import DoctorList from "../components/DoctorList";
 import Head from "next/head";
