@@ -46,7 +46,9 @@ const DoctorFilters: React.FC<DoctorFiltersProps> = ({selected, setSelected}) =>
   );
 
   return (
-    <aside className="sticky top-0 z-10 w-full max-w-xs p-4 bg-white space-y-6 shadow rounded-lg h-[calc(100vh-80px)] overflow-y-auto">
+    // <aside className="sticky top-0 z-10 w-full max-w-xs p-4 bg-white space-y-6 shadow rounded-lg h-[calc(100vh-80px)] overflow-y-auto">
+    <aside className="hidden md:block sticky top-0 z-10 w-full max-w-xs p-4 bg-white space-y-6 shadow rounded-lg h-[calc(100vh-80px)] overflow-y-auto">
+
       {/* Header */}
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-lg font-semibold text-black">Filters</h2>
