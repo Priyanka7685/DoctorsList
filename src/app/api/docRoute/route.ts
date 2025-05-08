@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
 
 
     interface Query {
-      [key: string]: any; // Can be refined based on your query structure
+      [key: string]: string | number | boolean | RegExp | object | undefined;
     }
 
     // listing doctors with filter
