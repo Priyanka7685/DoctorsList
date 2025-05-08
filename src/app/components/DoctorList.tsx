@@ -45,7 +45,7 @@ const DoctorList: React.FC<DoctorListProps> = ({ selectedFilters }) => {
     setDoctors([])
     setCurrentPage(1); // Reset to the first page when filters change
     fetchedPages.current.clear()
-    fetchDoctors
+    fetchDoctors(1)
   }, [selectedFilters]);
 
     const fetchDoctors = async (page: number) => {

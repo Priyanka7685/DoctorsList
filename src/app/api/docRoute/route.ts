@@ -10,6 +10,11 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
   });
 
+  interface CloudinaryUploadResponse {
+    secure_url: string;
+    // You can add other fields from the Cloudinary response here if needed
+  }
+
 // add doctors
 export async function POST(req: NextRequest) {
     await connect();
@@ -19,14 +24,14 @@ export async function POST(req: NextRequest) {
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  const uploadResult = await new Promise((resolve, reject) => {
+  const uploadResult = await new Promise<CloudinaryUploadResponse>((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: 'doctors',
       },
       (error, result) => {
         if (error) reject(error);
-        else resolve(result);
+        else resolve(result  as CloudinaryUploadResponse);
       }
     );
     const readable = new Readable();
@@ -38,7 +43,7 @@ export async function POST(req: NextRequest) {
 
   const doctor = await Doctors.create({
     name: formData.get('name'),
-    imageUrl: (uploadResult as any).secure_url,
+    imageUrl: uploadResult.secure_url,
     qualifications: formData.getAll('qualifications'),
     specialization: formData.get('specialization'),
     experience: formData.get('experience'),
@@ -61,6 +66,10 @@ export async function POST(req: NextRequest) {
     } 
 
 
+    interface Query {
+      [key: string]: any; // Can be refined based on your query structure
+    }
+
     // listing doctors with filter
 export async function GET(req: NextRequest) {
     await connect();
@@ -72,7 +81,7 @@ export async function GET(req: NextRequest) {
 
 
   const filterObject = filters ? JSON.parse(filters) : [];
-  const query: any = {};
+  const query: Query = {};
 
   filterObject.forEach((filter: string) => {
 
