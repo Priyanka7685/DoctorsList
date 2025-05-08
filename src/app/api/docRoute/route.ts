@@ -2,27 +2,13 @@ import { NextResponse, NextRequest } from "next/server";
 import Doctors from "@/lib/doctorModels";
 import { connect } from "@/lib/dbConfig";
 import {v2 as cloudinary} from 'cloudinary';
-import multer from 'multer';
 import { Readable } from "stream";
-import path from "path";
 
 cloudinary.config({
     cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
   });
-
-  // const storage = multer.memoryStorage();
-
-  // const fileFilter = (_req: any, file: any, cb: any) => {
-  //   const ext = path.extname(file.originalname).toLowerCase();
-  //   if (ext === '.jpg' || ext === '.jpeg' || ext === '.png') {
-  //     cb(null, true);
-  //   } else {
-  //     cb(new Error('Only images are allowed'), false);
-  //   }
-  // };
-
 
 // add doctors
 export async function POST(req: NextRequest) {
@@ -112,12 +98,22 @@ export async function GET(req: NextRequest) {
 
     // Fees Filters
     if (filter === '100-500') {
-      query['consultationFees.offline'] = { $lte: 500 };
+      query['$or'] = [
+        { 'consultationFees.offline': { $exists: true, $ne: null, $lte: 500 } },
+        { 'consultationFees.online': { $exists: true, $ne: null, $lte: 500 } },
+      ];
     } else if (filter === '500-1000') {
-      query['consultationFees.offline'] = { $gte: 501, $lte: 1000 };
+      query['$or'] = [
+        { 'consultationFees.offline': { $exists: true, $ne: null, $gte: 501, $lte: 1000 } },
+        { 'consultationFees.online': { $exists: true, $ne: null, $gte: 501, $lte: 1000 } },
+      ];
     } else if (filter === '1000+') {
-      query['consultationFees.offline'] = { $gte: 1001 };
+      query['$or'] = [
+        { 'consultationFees.offline': { $exists: true, $ne: null, $gte: 1001 } },
+        { 'consultationFees.online': { $exists: true, $ne: null, $gte: 1001 } },
+      ];
     }
+    
 
     // Hospital Filters
     if (filter === 'Apollo Hospital') {
